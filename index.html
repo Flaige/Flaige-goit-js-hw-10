@@ -1,0 +1,169 @@
+<!-- Plik index.html -->
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wyszukiwanie kraju</title>
+    <style>
+        /* Style CSS dla wyglądu interfejsu */
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #search-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        #search-box {
+            width: 300px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #results {
+            margin-top: 20px;
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .country {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+        .country:last-child {
+            border-bottom: none;
+        }
+        .country h2 {
+            margin: 0;
+            color: #007BFF;
+        }
+        .country p {
+            margin: 5px 0;
+        }
+        .country img {
+            vertical-align: middle;
+        }
+        .country-list-item {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+        }
+        .country-list-item img {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Nagłówek strony -->
+    <h1>Wyszukiwanie kraju</h1>
+
+    <!-- Kontener dla pola wyszukiwania -->
+    <div id="search-container">
+        <input type="text" id="search-box" placeholder="Wpisz nazwę kraju">
+    </div>
+
+    <!-- Kontener na wyniki wyszukiwania -->
+    <div id="results"></div>
+
+    <!-- Skrypt JavaScript do obsługi interakcji użytkownika -->
+    <script type="module">
+        // Import funkcji fetchCountries z pliku fetchCountries.js
+        import { fetchCountries } from './fetchCountries.js';
+
+        // Funkcja debounce do opóźnienia wyszukiwania po wpisaniu
+        function debounce(func, delay) {
+            let debounceTimer;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        // Funkcja wyszukiwania kraju
+        async function searchCountry() {
+            const query = document.getElementById('search-box').value.trim(); // Pobranie wartości z pola wyszukiwania
+            const resultsDiv = document.getElementById('results'); // Referencja do kontenera wyników
+            resultsDiv.innerHTML = ''; // Wyczyszczenie poprzednich wyników
+
+            // Obsługa braku wpisanego tekstu w polu wyszukiwania
+            if (!query) {
+                resultsDiv.innerHTML = '<p>Wpisz nazwę kraju!</p>';
+                return;
+            }
+
+            try {
+                // Wywołanie funkcji fetchCountries, aby pobrać dane o krajach
+                const countries = await fetchCountries(query);
+
+                // Obsługa sytuacji, gdy zwrócono więcej niż 10 krajów
+                if (countries.length > 10) {
+                    resultsDiv.innerHTML = '<p>Znaleziono zbyt wiele pasujących krajów. Wprowadź bardziej specyficzną nazwę.</p>';
+                    return;
+                }
+
+                // Obsługa sytuacji, gdy nie znaleziono żadnego kraju
+                if (countries.length === 0) {
+                    resultsDiv.innerHTML = '<p>Nie znaleziono kraju.</p>';
+                    return;
+                }
+
+                // Obsługa sytuacji, gdy znaleziono od 2 do 10 krajów
+                if (countries.length >= 2 && countries.length <= 10) {
+                    countries.forEach(country => {
+                        const countryListItem = document.createElement('div');
+                        countryListItem.classList.add('country-list-item');
+                        countryListItem.innerHTML = `
+                            <img src="${country.flag}" alt="Flaga ${country.name}" width="50">
+                            <span>${country.name}</span>
+                        `;
+                        resultsDiv.appendChild(countryListItem);
+                    });
+                    return;
+                }
+
+                // Obsługa sytuacji, gdy znaleziono dokładnie 1 kraj
+                if (countries.length === 1) {
+                    const country = countries[0];
+                    const countryCard = document.createElement('div');
+                    countryCard.classList.add('country');
+                    countryCard.innerHTML = `
+                        <h2>${country.name}</h2>
+                        <p><strong>Stolica:</strong> ${country.capital || 'Brak'}</p>
+                        <p><strong>Populacja:</strong> ${country.population.toLocaleString()}</p>
+                        <p><strong>Flaga:</strong> <img src="${country.flag}" alt="Flaga ${country.name}" width="50"></p>
+                        <p><strong>Języki:</strong> ${country.languages}</p>
+                    `;
+                    resultsDiv.appendChild(countryCard);
+                    return;
+                }
+            } catch (error) {
+                // Obsługa błędów związanych z brakiem połączenia lub brakiem krajów
+                if (error.message === 'Country not found') {
+                    resultsDiv.innerHTML = '<p>Ooops, nie znaleziono kraju o takiej nazwie.</p>';
+                } else {
+                    resultsDiv.innerHTML = '<p>Wystąpił błąd podczas wyszukiwania. Spróbuj ponownie.</p>';
+                }
+            }
+        }
+
+        // DebouncedSearch - funkcja debounce dla funkcji searchCountry
+        const debouncedSearch = debounce(searchCountry, 300);
+
+        // Nasłuchiwanie zdarzenia input na polu wyszukiwania
+        document.getElementById('search-box').addEventListener('input', debouncedSearch);
+    </script>
+</body>
+</html>
