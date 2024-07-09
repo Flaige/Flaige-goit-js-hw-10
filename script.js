@@ -68,3 +68,4 @@ const debouncedSearch = debounce(searchCountry, 300);
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('search-box').addEventListener('input', debouncedSearch);
 });
+
