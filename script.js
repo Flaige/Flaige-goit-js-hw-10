@@ -47,7 +47,7 @@ async function searchCountry() {
             countryCard.classList.add('country');
             countryCard.innerHTML = `
                 <h2>${country.name}</h2>
-                <p><strong>Stolica:</strong> ${country.capital || 'Brak'}</p>
+                <p><strong>Stolica:</strong> ${country.capital}</p>
                 <p><strong>Populacja:</strong> ${country.population.toLocaleString()}</p>
                 <p><strong>Flaga:</strong> <img src="${country.flag}" alt="Flaga ${country.name}" width="50"></p>
                 <p><strong>Języki:</strong> ${country.languages}</p>
@@ -68,4 +68,3 @@ const debouncedSearch = debounce(searchCountry, 300);
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('search-box').addEventListener('input', debouncedSearch);
 });
-
